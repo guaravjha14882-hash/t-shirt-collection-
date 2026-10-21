@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopping Mart Login</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f0f2f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.card {
+  background: white;
+  width: 340px;
+  max-width: 88%;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #0002;
+  text-align: center;
+}
+h1 { color: #1877f2; }
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin: 9px 0;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 16px;
+}
+button {
+  width: 100%;
+  padding: 13px;
+  background: #1877f2;
+  color: white;
+  border: 0;
+  border-radius: 7px;
+  margin-top: 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+#otpSection { display: none; }
+#message { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Shopping Mart</h1>
+  <p>Login or create your account</p>
+
+  <div id="phoneSection">
+    <input id="phone" type="tel"
+      placeholder="10-digit mobile number"
+      maxlength="10" inputmode="numeric">
+    <div id="recaptcha-container"></div>
+    <button id="sendBtn">Send OTP</button>
+  </div>
+
+  <div id="otpSection">
+    <input id="otp" type="text"
+      placeholder="Enter 6-digit OTP"
+      maxlength="6" inputmode="numeric">
+    <button id="verifyBtn">Verify & Continue</button>
+  </div>
+
+  <p id="message" role="status"></p>
+</div>
+
+<script type="module">
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+import {
+  getAuth,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+// Yahan apni Firebase Console wali configuration paste karo.
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const message = document.getElementById("message");
+
+let verifier;
+let confirmationResult;
+
+document.getElementById("sendBtn").onclick = async () => {
+  const phone = document.getElementById("phone").value.trim();
+
+  if (!/^[6-9]\d{9}$/.test(phone)) {
+    message.textContent = "Enter a valid 10-digit mobile number.";
+    return;
+  }
+
+  try {
+    message.textContent = "Preparing verification...";
+
+    if (!verifier) {
+      verifier = new RecaptchaVerifier(auth,
+        "recaptcha-container", { size: "normal" });
+      await verifier.render();
+    }
+
+    confirmationResult = await signInWithPhoneNumber(
+      auth, "+91" + phone, verifier
+    );
+
+    document.getElementById("phoneSection").style.display = "none";
+    document.getElementById("otpSection").style.display = "block";
+    message.textContent = "OTP sent. Check your SMS.";
+  } catch (error) {
+    message.textContent = "OTP error: " + error.message;
+    if (verifier) {
+      verifier.clear();
+      verifier = null;
+    }
+  }
+};
+
+document.getElementById("verifyBtn").onclick = async () => {
+  const code = document.getElementById("otp").value.trim();
+
+  if (!confirmationResult || !/^\d{6}$/.test(code)) {
+    message.textContent = "Enter the 6-digit OTP.";
+    return;
+  }
+
+  try {
+    message.textContent = "Verifying...";
+    await confirmationResult.confirm(code);
+
+    window.location.href =
+      "https://guaravjha14882-hash.github.io/t-shirt-collection-/";
+  } catch (error) {
+    message.textContent = "Verification failed. Check the OTP.";
+  }
+};
+</script>
+</body>
+</html>
